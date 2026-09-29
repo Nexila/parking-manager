@@ -31,7 +31,7 @@ jobs:
             echo "Starting Deployment"
             echo "=================================="
 
-            cd /opt/parking-manager
+            cd parking-manager
 
             echo "Pulling latest code..."
 
