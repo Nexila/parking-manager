@@ -1,0 +1,59 @@
+services:
+
+  mongodb:
+    image: mongo:7
+    container_name: parking-mongodb
+    restart: unless-stopped
+
+    volumes:
+      - mongodb_data:/data/db
+
+    networks:
+      - parking-network
+
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+
+    container_name: parking-server
+
+    restart: unless-stopped
+
+    env_file:
+      - ./server/.env
+
+    depends_on:
+      - mongodb
+
+    networks:
+      - parking-network
+
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+
+    container_name: parking-client
+
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+
+    depends_on:
+      - server
+
+    networks:
+      - parking-network
+
+
+volumes:
+  mongodb_data:
+
+
+networks:
+  parking-network:
+    driver: bridge
