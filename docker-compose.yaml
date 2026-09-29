@@ -5,8 +5,14 @@ services:
     container_name: parking-mongodb
     restart: unless-stopped
 
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+
     volumes:
       - mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d:ro
 
     networks:
       - parking-network
@@ -18,7 +24,6 @@ services:
       dockerfile: Dockerfile
 
     container_name: parking-server
-
     restart: unless-stopped
 
     env_file:
@@ -37,7 +42,6 @@ services:
       dockerfile: Dockerfile
 
     container_name: parking-client
-
     restart: unless-stopped
 
     ports:
