@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import Tenant from '../models/Tenant.js';
+import Payment from '../models/Payment.js';
+import { asyncRoute, monthIsValid } from '../utils/http.js';
+const router = Router();
+router.get('/', asyncRoute(async (_req, res) => res.json(await Tenant.find().sort({ slot: 1 }))));
+router.post('/', asyncRoute(async (req, res) => { const { slot, start } = req.body; if (!monthIsValid(start)) return res.status(400).json({ message: 'A valid start month is required.' }); const conflict = await Tenant.exists({ slot, $or: [{ end: null }, { end: { $gte: start } }] }); if (conflict) return res.status(409).json({ message: 'That slot is already occupied.' }); res.status(201).json(await Tenant.create(req.body)); }));
+router.put('/:id', asyncRoute(async (req, res) => { const tenant = await Tenant.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }); if (!tenant) return res.status(404).json({ message: 'Tenant not found.' }); res.json(tenant); }));
+router.delete('/:id', asyncRoute(async (req, res) => { const tenant = await Tenant.findByIdAndDelete(req.params.id); if (!tenant) return res.status(404).json({ message: 'Tenant not found.' }); await Payment.deleteMany({ tenantId: tenant._id }); res.status(204).end(); }));
+export default router;
