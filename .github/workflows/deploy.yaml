@@ -22,6 +22,7 @@ jobs:
           host: ${{ secrets.EC2_HOSTIP }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEYPARKING }}
+          command_timeout: 20m
 
           script: |
 
@@ -31,13 +32,30 @@ jobs:
             echo "Starting Deployment"
             echo "=================================="
 
-            cd parking-manager
+            cd /home/ubuntu/parking-manager
 
             echo "Pulling latest code..."
 
             git fetch origin main
-
             git reset --hard origin/main
+
+            echo "Creating MongoDB environment..."
+
+            cat > .env <<EOF
+            MONGO_ROOT_USERNAME=${{ secrets.MONGO_ROOT_USERNAME }}
+            MONGO_ROOT_PASSWORD=${{ secrets.MONGO_ROOT_PASSWORD }}
+            MONGO_USERNAME=${{ secrets.MONGO_USERNAME }}
+            MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }}
+            MONGO_DATABASE=${{ secrets.MONGO_DATABASE }}
+            EOF
+
+            echo "Creating server environment..."
+
+            cat > server/.env <<EOF
+            PORT=5000
+            MONGODB_URI=mongodb://${{ secrets.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@mongodb:27017/${{ secrets.MONGO_DATABASE }}?authSource=${{ secrets.MONGO_DATABASE }}
+            CLIENT_URL=http://${{ secrets.EC2_HOSTIP }}
+            EOF
 
             echo "Stopping old containers..."
 
@@ -61,4 +79,4 @@ jobs:
 
             echo "=================================="
             echo "Deployment Completed"
-            echo "==================================" 
+            echo "=================================="
