@@ -27,7 +27,7 @@ function Monthly({
   totalDue,
   setMonth,
   setModal,
-  remind,
+  openReminder,
 }) {
   const renderRows = live.map((tenant) => {
     const due = Math.max(0, pending(payments, tenant, month));
@@ -40,12 +40,12 @@ function Monthly({
       <div
         className="item"
         key={tenant._id}
-        onClick={() =>
-          setModal({
-            type: "detail",
-            tenant,
-          })
-        }
+        // onClick={() =>
+        //   setModal({
+        //     type: "detail",
+        //     tenant,
+        //   })
+        // }
       >
         <div className="slot">{tenant.slot}</div>
 
@@ -75,7 +75,7 @@ function Monthly({
             className="sq"
             onClick={(e) => {
               e.stopPropagation();
-              remind(tenant);
+              openReminder(tenant);
             }}
           >
             🔔

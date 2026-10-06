@@ -1,7 +1,7 @@
 import React, { useEffect as reactUseEffect, useMemo, useState } from "react";
 
 import { api } from "./api";
-
+import ReminderForm from "./components/ReminderForm";
 import {
   CAPACITY,
   currentMonth,
@@ -13,6 +13,7 @@ import {
   deposit,
   late,
   sum,
+  inr,
 } from "./utils";
 
 import Monthly from "./components/Monthly";
@@ -231,7 +232,12 @@ function App() {
   // --------------------------------------------------
   // RENDER
   // --------------------------------------------------
-
+  const openReminder = (tenant) => {
+    setModal({
+      type: "reminder",
+      tenant,
+    });
+  };
   return (
     <>
       <main>
@@ -251,7 +257,7 @@ function App() {
             totalDue={totalDue}
             setMonth={setMonth}
             setModal={setModal}
-            remind={remind}
+            openReminder={openReminder}
           />
         )}
 
@@ -375,6 +381,17 @@ function App() {
           }}
         />
       )}
+
+      {modal?.type === "reminder" && (
+        <ReminderForm
+          tenant={modal.tenant}
+          payments={payments}
+          settings={settings}
+          onClose={() => setModal(null)}
+        />
+      )}
+
+    
     </>
   );
 }

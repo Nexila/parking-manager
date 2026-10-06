@@ -102,8 +102,13 @@ export function TenantForm({ tenant, tenants, month, onClose, onSave }) {
 
             <input
               type="tel"
+              inputMode="numeric"
+              maxLength={10}
               value={form.phone}
-              onChange={(e) => set("phone", e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, "").slice(0, 10);
+                set("phone", value);
+              }}
             />
           </div>
 
