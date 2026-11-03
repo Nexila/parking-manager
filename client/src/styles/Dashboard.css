@@ -1,0 +1,188 @@
+
+/* DASHBOARD */
+
+.dashboard-page {
+  width: 100%;
+}
+
+.dashboard-heading {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.dashboard-subtitle {
+  margin: -6px 0 10px;
+}
+
+.dashboard-payment-bar {
+  height: 12px;
+}
+
+.dashboard-payment-labels {
+  margin-top: 4px;
+}
+
+.dashboard-bike-info {
+  text-align: right;
+}
+
+.dashboard-high-low {
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.dashboard-high {
+  color: var(--ok);
+}
+
+.dashboard-low {
+  color: var(--er);
+}
+
+/* ORIGINAL CHART STYLES */
+
+.ch-g {
+  stroke: var(--bd);
+}
+
+.ch-t {
+  fill: var(--mu);
+  font-size: 10px;
+}
+
+.ch-l {
+  fill: none;
+  stroke: var(--ac);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.ch-a {
+  fill: var(--ac);
+  opacity: 0.12;
+}
+
+.ch-d {
+  fill: var(--ac);
+}
+
+.ch-v {
+  stroke: var(--wa);
+  stroke-dasharray: 4 3;
+  stroke-width: 1.2;
+}
+
+.ch-b {
+  fill: var(--ac);
+}
+
+/* RANGE BUTTONS */
+
+.rng button {
+  padding: 6px 10px;
+}
+
+.rng button.on {
+  background: var(--ac);
+  color: #ffffff;
+  border-color: var(--ac);
+  background-color: #0d7c2f;
+}
+
+/* WEEKLY AND MONTHLY BAR CHART */
+
+.dashboard-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 5px;
+  height: 150px;
+  padding: 12px 2px 0;
+}
+
+.dashboard-bar-item {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.dashboard-bar-value {
+  font-size: 10px;
+  color: var(--mu);
+  margin-bottom: 4px;
+}
+
+.dashboard-bar-track {
+  width: 70%;
+  flex: 1;
+  min-height: 2px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.dashboard-bar {
+  width: 100%;
+  min-height: 2px;
+  background: var(--ac);
+  border-radius: 3px 3px 0 0;
+}
+
+.dashboard-bar-label {
+  font-size: 10px;
+  color: var(--mu);
+  margin-top: 6px;
+}
+
+@media (max-width: 400px) {
+  .dashboard-heading {
+    align-items: flex-start;
+  }
+
+  .dashboard-chart {
+    gap: 2px;
+  }
+
+  .dashboard-bar-label {
+    font-size: 9px;
+  }
+
+  .dashboard-high-low {
+    gap: 6px;
+  }
+}
+
+
+/* Dark Excel green chart bars */
+.ch-b {
+  fill: #126638;
+}
+
+/* Chart labels */
+.ch-t {
+  fill: #146b60;
+  font-size: 10px;
+}
+
+/* Chart background */
+.dashboard-chart {
+  background: #10291d;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+/* Line chart */
+.ch-l {
+  stroke: #21a366;
+}
+
+.ch-a {
+  fill: rgba(33, 163, 102, 0.15);
+}
+
+.ch-d {
+  fill: #21a366;
+}
