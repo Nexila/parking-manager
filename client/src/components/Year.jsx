@@ -230,12 +230,11 @@ function Year({ tenants, payments, year, onYear, slips = [], expenses = [] }) {
 
   // ----------------------------------------
   // UI
-  // ----------------------------------------
+  // -------------------------------
 
   return (
     <div className="year-page">
       <h1>Yearly summary</h1>
-
       <div className="mon">
         <button className="sq" onClick={() => onYear(year - 1)}>
           ‹
