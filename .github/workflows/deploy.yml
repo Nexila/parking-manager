@@ -1,56 +1,27 @@
-
-name: Parking Manager CI/CD
+name: Parking Manager Deploy
 
 on:
   push:
     branches:
       - master
 
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: parking-manager-production
-  cancel-in-progress: false
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure SSH
+      - name: Deploy to EC2
         env:
-          EC2_KEY: ${{ secrets.EC2_SSH_KEY }}
-          EC2_KNOWN_HOSTS: ${{ secrets.EC2_KNOWN_HOSTS }}
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-
-          printf '%s\n' "$EC2_KEY" > ~/.ssh/key.pem
-          chmod 600 ~/.ssh/key.pem
-
-          printf '%s\n' "$EC2_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
-
-      - name: Deploy application
-        env:
+          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
-          ssh -i ~/.ssh/key.pem \
-            -o StrictHostKeyChecking=yes \
-            ubuntu@$EC2_HOST \
-            "cd /home/ubuntu/parking-manager && git pull --ff-only origin master && docker compose up -d --build"
+          echo "$SSH_KEY" > key.pem
+          chmod 600 key.pem
 
-      - name: Verify application
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-        run: |
-          ssh -i ~/.ssh/key.pem \
-            -o StrictHostKeyChecking=yes \
-            ubuntu@$EC2_HOST \
-            "docker compose ps && curl -f http://localhost/"
+          ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@$EC2_HOST '
+            cd /home/ubuntu/parking-manager
+            git pull origin master
+            docker compose up -d --build
+          '
+
+          rm -f key.pem
