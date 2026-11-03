@@ -21,6 +21,13 @@ import Tenants from "./components/Tenants";
 import Year from "./components/Year";
 import { TenantForm, PaymentForm, Detail, Settings } from "./components/Models";
 
+import Expenses from "./components/Expenses";
+import ExpenseForm from "./components/ExpenseForm";
+
+import Daily from "./components/Daily";
+
+import Dashboard from "./components/Dashboard";
+
 const useEffect = (effect, dependencies) =>
   reactUseEffect(() => {
     effect();
@@ -37,10 +44,15 @@ function App() {
     },
   });
 
-  const [tab, setTab] = useState("home");
+  const [tab, setTab] = useState("dash");
   const [month, setMonth] = useState(currentMonth());
   const [modal, setModal] = useState(null);
   const [error, setError] = useState("");
+
+  const [expenses, setExpenses] = useState([]);
+
+  const [slips, setSlips] = useState([]);
+  const [day, setDay] = useState(today());
 
   // --------------------------------------------------
   // LOAD DATA
@@ -59,7 +71,23 @@ function App() {
       .catch((e) => setError(e.message));
   };
 
+  const reloadExpenses = () => {
+    api
+      .getExpenses()
+      .then((data) => setExpenses(data))
+      .catch((e) => setError(e.message));
+  };
+
+  const reloadSlips = () => {
+    api
+      .getSlips()
+      .then((data) => setSlips(data))
+      .catch((e) => setError(e.message));
+  };
+
   useEffect(reload, []);
+  useEffect(reloadExpenses, []);
+  useEffect(reloadSlips, []);
 
   // --------------------------------------------------
   // THEME
@@ -217,6 +245,27 @@ function App() {
     })),
   );
 
+  //expense - Collected
+  const dailyIncome = slips
+    .filter((s) => s.date.slice(0, 7) === month)
+    .reduce((total, s) => {
+      const count =
+        s.start != null && s.end != null && s.end >= s.start
+          ? s.end - s.start + 1
+          : 0;
+
+      const expected = count * Number(s.rate || 0) + Number(s.over || 0);
+
+      const cash = Number(s.cash || 0);
+      const paytm = Number(s.paytm || 0);
+
+      const totalCollected = !cash && !paytm ? expected : cash + paytm;
+
+      return total + totalCollected;
+    }, 0);
+
+  const income = collected + dailyIncome;
+
   const expected = sum(
     live.map((tenant) => ({
       amount: tenant.rent,
@@ -238,11 +287,72 @@ function App() {
       tenant,
     });
   };
+
+  ///Expenses
+  // SAVE EXPENSE
+  const saveExpense = async (form) => {
+    try {
+      await api.createExpense(form);
+
+      await reloadExpenses();
+
+      setModal(null);
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  // DELETE EXPENSE
+  const deleteExpense = async (id) => {
+    try {
+      await api.deleteExpense(id);
+
+      await reloadExpenses();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  // slip - daily
+  const saveSlip = async (form) => {
+    try {
+      await api.saveSlip(day, form);
+
+      // Save the selected rate in existing settings
+      if (form.rate) {
+        await api.saveSettings({
+          ...settings,
+          slipRate: Number(form.rate),
+        });
+      }
+
+      await reloadSlips();
+      alert("Daily collection saved");
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  const deleteSlip = async (date) => {
+    try {
+      await api.deleteSlip(date);
+      await reloadSlips();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
   return (
     <>
       <main>
         {error && <div className="note">{error}</div>}
-
+        {tab === "dash" && (
+          <Dashboard
+            slips={slips}
+            payments={payments}
+            tenants={tenants}
+            // bikes={bikes}
+          />
+        )}
         {/* MONTHLY TAB */}
         {tab === "home" && (
           <Monthly
@@ -255,6 +365,8 @@ function App() {
             collected={collected}
             expected={expected}
             totalDue={totalDue}
+            slips={slips}
+            expenses={expenses}
             setMonth={setMonth}
             setModal={setModal}
             openReminder={openReminder}
@@ -275,15 +387,39 @@ function App() {
           />
         )}
 
+        {/* DAILY TAB */}
+        {tab === "daily" && (
+          <Daily
+            slips={slips}
+            settings={settings}
+            day={day}
+            setDay={setDay}
+            onSave={saveSlip}
+            onDelete={deleteSlip}
+          />
+        )}
+        {/* EXPENSES TAB */}
+        {tab === "expenses" && (
+          <Expenses
+            expenses={expenses}
+            income={income}
+            month={month}
+            setMonth={setMonth}
+            setModal={setModal}
+            onDelete={deleteExpense}
+          />
+        )}
+
         {/* YEAR TAB */}
         {tab === "year" && (
           <Year
             tenants={tenants}
             payments={payments}
             year={Number(month.slice(0, 4))}
+            slips={slips}
+            expenses={expenses}
             onYear={(newYear) => {
               const currentMonthNumber = month.slice(5, 7);
-
               setMonth(`${newYear}-${currentMonthNumber}`);
             }}
           />
@@ -293,8 +429,11 @@ function App() {
       {/* NAVIGATION */}
       <nav>
         {[
+          ["dash", "Dash"],
           ["home", "Monthly"],
           ["tenants", "Tenants"],
+          ["daily", "Daily"],
+          ["expenses", "Expenses"],
           ["year", "Year"],
         ].map(([id, label]) => (
           <button
@@ -391,7 +530,10 @@ function App() {
         />
       )}
 
-    
+      {/* EXPENSE FORM */}
+      {modal?.type === "expense" && (
+        <ExpenseForm onClose={() => setModal(null)} onSave={saveExpense} />
+      )}
     </>
   );
 }
