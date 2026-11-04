@@ -194,7 +194,6 @@ function Dashboard({ slips = [], payments = [], tenants = [], bikes = [] }) {
       value: count,
     };
   });
-
   // COMPARISON
   const changeText = (current, previous, label) => {
     if (!previous) return "";
@@ -205,6 +204,54 @@ function Dashboard({ slips = [], payments = [], tenants = [], bikes = [] }) {
 
     return `${current >= previous ? "▲" : "▼"} ${percentage}% vs ${label}`;
   };
+  // DAILY COLLECTION · LAST 6 MONTHS
+  const getMonthSummary = (month) => {
+    const monthSlips = slips.filter((item) => item.date?.slice(0, 7) === month);
+
+    return monthSlips.reduce(
+      (total, item) => {
+        const figure = getDayFigure(item);
+
+        total.n += figure.count;
+        total.cash += figure.cash;
+        total.pt += figure.paytm;
+        total.total += figure.total;
+        total.short += figure.short;
+
+        return total;
+      },
+      { n: 0, cash: 0, pt: 0, total: 0, short: 0 },
+    );
+  };
+
+  const monthlyRevenue = Array.from({ length: 6 }, (_, i) => {
+    const month = shiftMonth(currentMonth, -(5 - i));
+    const summary = getMonthSummary(month);
+
+    return {
+      month,
+      label: monthName(month).slice(0, 3),
+      value: summary.total,
+      summary,
+    };
+  });
+
+  const revenueChange = changeText(
+    monthlyRevenue[5].value,
+    monthlyRevenue[4].value,
+    "last month",
+  );
+
+  const revenueTotals = monthlyRevenue.reduce(
+    (total, item) => ({
+      n: total.n + item.summary.n,
+      cash: total.cash + item.summary.cash,
+      pt: total.pt + item.summary.pt,
+      total: total.total + item.value,
+      short: total.short + item.summary.short,
+    }),
+    { n: 0, cash: 0, pt: 0, total: 0, short: 0 },
+  );
 
   // SUMMARY CARD
   const SummaryCard = ({ title, value, subtitle, color }) => (
@@ -276,6 +323,62 @@ function Dashboard({ slips = [], payments = [], tenants = [], bikes = [] }) {
     );
   };
 
+  // BAR CHART
+  const BarChart2 = ({ items, money = false }) => {
+    const W = 320;
+    const H = 150;
+    const L = 8;
+    const T = 18;
+    const B = 22;
+
+    const max = Math.max(...items.map((item) => item.value), 1);
+
+    const n = items.length;
+    const bw = (W - 2 * L) / n;
+    const ih = H - T - B;
+
+    return (
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img">
+        {items.map((item, i) => {
+          const h = (ih * item.value) / max;
+          const x = L + i * bw + bw * 0.15;
+          const y = T + ih - h;
+
+          return (
+            <g key={i}>
+              <rect
+                x={x}
+                y={y}
+                width={bw * 0.7}
+                height={h}
+                rx="3"
+                className="ch-b"
+                opacity={i === n - 1 ? 1 : 0.55}
+              />
+
+              <text
+                x={x + bw * 0.35}
+                y={y - 4}
+                textAnchor="middle"
+                className="ch-t"
+              >
+                {money ? compact(item.value) : item.value}
+              </text>
+
+              <text
+                x={x + bw * 0.35}
+                y={H - 6}
+                textAnchor="middle"
+                className="ch-t"
+              >
+                {item.label}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    );
+  };
   // LINE CHART
   const LineChart = ({ points, avg }) => {
     if (!points.length) {
@@ -559,6 +662,74 @@ function Dashboard({ slips = [], payments = [], tenants = [], bikes = [] }) {
         </div>
 
         <BarChart items={monthlyData} />
+      </div>
+
+      {/* DAILY COLLECTION · MONTH-WISE REVENUE */}
+      <div className="card">
+        <div className="row">
+          <b>Daily collection · month-wise revenue</b>
+
+          <span className="mu sm">{revenueChange}</span>
+        </div>
+
+        <div className="mu sm">Total collected per month (last 6 months)</div>
+
+        <BarChart2 items={monthlyRevenue} money />
+
+        <div style={{ overflowX: "auto", marginTop: "8px" }}>
+          <div style={{ minWidth: "400px" }}>
+            <div className="dw mu" style={{ cursor: "default" }}>
+              <span>Month</span>
+              <span>Slips</span>
+              <span>Cash</span>
+              <span>PayTM</span>
+              <span>Total</span>
+              <span>Short</span>
+            </div>
+
+            {monthlyRevenue.map((item) => (
+              <div
+                className="dw"
+                style={{ cursor: "default" }}
+                key={item.month}
+              >
+                <span>
+                  {item.label} {item.month.slice(2, 4)}
+                </span>
+
+                <span>{item.summary.n}</span>
+
+                <span>{formatMoney(item.summary.cash)}</span>
+
+                <span>{formatMoney(item.summary.pt)}</span>
+
+                <b>{formatMoney(item.value)}</b>
+
+                <span
+                  style={{
+                    color: item.summary.short ? "var(--er)" : "var(--mu)",
+                  }}
+                >
+                  {formatMoney(item.summary.short)}
+                </span>
+              </div>
+            ))}
+
+            <div className="dw tot" style={{ cursor: "default" }}>
+              <span>6 mo.</span>
+
+              <span>{revenueTotals.n}</span>
+
+              <span>{formatMoney(revenueTotals.cash)}</span>
+
+              <span>{formatMoney(revenueTotals.pt)}</span>
+
+              <b>{formatMoney(revenueTotals.total)}</b>
+
+              <span>{formatMoney(revenueTotals.short)}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

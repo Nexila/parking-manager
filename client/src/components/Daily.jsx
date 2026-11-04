@@ -47,6 +47,33 @@ function dayFig(x = {}) {
   };
 }
 
+const MN = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+function getDMYears(slips, dm) {
+  const currentYear = new Date().getFullYear();
+
+  const years = new Set([currentYear - 1, currentYear, Number(dm.slice(0, 4))]);
+
+  slips.forEach((x) => {
+    if (x.date) years.add(Number(x.date.slice(0, 4)));
+  });
+
+  return [...years].sort((a, b) => a - b);
+}
+
 function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
   const savedSlip = slips.find((x) => x.date === day);
 
@@ -60,6 +87,7 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
     cash: "",
     paytm: "",
   });
+  const [dm, setDm] = useState(day.slice(0, 7)); // Year-Month for month summary
 
   // Load saved values when selected day changes
   // Load saved values when selected day changes
@@ -90,7 +118,9 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
       });
     }
   }, [day, slips, settings.slipRate]);
-
+  useEffect(() => {
+    setDm(day.slice(0, 7));
+  }, [day]);
   // Same as original dayFig()
   const result = dayFig({
     ...form,
@@ -226,10 +256,87 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
       />
     </div>
   );
+  const monthSlips = slips
+    .filter((x) => (x.date || "").slice(0, 7) === dm)
+    .sort((a, b) => a.date.localeCompare(b.date));
 
+  const monthSummary = monthSlips.reduce(
+    (acc, x) => {
+      const f = dayFig(x);
+
+      acc.days += 1;
+      acc.n += f.n;
+      acc.amt += f.amt;
+      acc.ot += f.ot;
+      acc.exp += f.exp;
+      acc.cash += f.cash;
+      acc.pt += f.pt;
+      acc.short += f.short;
+      acc.total += f.total;
+      acc.excess += Math.max(0, f.diff);
+
+      return acc;
+    },
+    {
+      days: 0,
+      n: 0,
+      amt: 0,
+      ot: 0,
+      exp: 0,
+      cash: 0,
+      pt: 0,
+      short: 0,
+      total: 0,
+      excess: 0,
+    },
+  );
+
+  const monthLabel = new Date(
+    Number(dm.slice(0, 4)),
+    Number(dm.slice(5, 7)) - 1,
+    1,
+  ).toLocaleString("en-IN", { month: "long", year: "numeric" });
+
+  const monthRow = (label, value, color, bold = false) => (
+    <div className={`item ${bold ? "tot" : ""}`} key={label}>
+      <div className="m">{label}</div>
+      <b style={color ? { color: `var(--${color})` } : {}}>{value}</b>
+    </div>
+  );
+
+  const weekday = (date) =>
+    new Date(date + "T00:00:00").toLocaleDateString("en-IN", {
+      weekday: "short",
+    });
   return (
     <div className="daily-page">
-      <h2>Daily collection</h2>
+      <div className="daily-heading">
+        <h2>Daily collection</h2>
+
+        <div className="daily-month-filter">
+          <select
+            value={dm.slice(5, 7)}
+            onChange={(e) => setDm(`${dm.slice(0, 4)}-${e.target.value}`)}
+          >
+            {MN.map((name, index) => (
+              <option key={name} value={String(index + 1).padStart(2, "0")}>
+                {name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={dm.slice(0, 4)}
+            onChange={(e) => setDm(`${e.target.value}-${dm.slice(5, 7)}`)}
+          >
+            {getDMYears(slips, dm).map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {/* COLLECTION PERIOD */}
       <div className="card">
@@ -407,6 +514,90 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
             counted as collected.
           </p>
         )}
+      </div>
+
+      {/* MONTH SUMMARY */}
+      <div className="card">
+        <b>Overall collection · {monthLabel}</b>
+
+        {monthRow("Days recorded", monthSummary.days)}
+        {monthRow("In-slips used", monthSummary.n)}
+        {monthRow("Slip amount (slips × cost)", inr(monthSummary.amt))}
+        {monthRow("+ Overtime", inr(monthSummary.ot))}
+        {monthRow("Expected (slip + overtime)", inr(monthSummary.exp))}
+        {monthRow("Cash", inr(monthSummary.cash))}
+        {monthRow("PayTM", inr(monthSummary.pt))}
+        {monthRow("Short amount", inr(monthSummary.short), "er")}
+
+        {monthSummary.excess > 0 &&
+          monthRow("Excess", inr(monthSummary.excess), "ok")}
+
+        {monthRow("Total collected", inr(monthSummary.total), "ok", true)}
+
+        {monthRow(
+          "Average per day",
+          inr(monthSummary.days ? monthSummary.total / monthSummary.days : 0),
+        )}
+      </div>
+
+      {/* DAY-WISE COLLECTION */}
+      <div className="card" style={{ overflowX: "auto" }}>
+        <b>Day-wise collection · {monthLabel}</b>
+
+        <div className="mu sm">Tap a day to open it</div>
+
+        <div style={{ minWidth: "400px" }}>
+          <div className="dw mu">
+            <span>Day</span>
+            <span>Slips</span>
+            <span>Cash</span>
+            <span>PayTM</span>
+            <span>Total</span>
+            <span>Short</span>
+          </div>
+
+          {monthSlips.map((x) => {
+            const f = dayFig(x);
+
+            return (
+              <div
+                className={`dw ${x.date === day ? "sel" : ""}`}
+                key={x.id || x.date}
+                onClick={() => setDay(x.date)}
+              >
+                <span>
+                  {x.date.slice(8)} {weekday(x.date)}
+                </span>
+                <span>{f.n}</span>
+                <span>{inr(f.cash)}</span>
+                <span>{inr(f.pt)}</span>
+                <b>{inr(f.total)}</b>
+                <span style={{ color: f.short ? "var(--er)" : "var(--mu)" }}>
+                  {inr(f.short)}
+                </span>
+              </div>
+            );
+          })}
+
+          {monthSlips.length > 0 && (
+            <div className="dw tot">
+              <span>Total</span>
+              <span>{monthSummary.n}</span>
+              <span>{inr(monthSummary.cash)}</span>
+              <span>{inr(monthSummary.pt)}</span>
+              <b>{inr(monthSummary.total)}</b>
+              <span style={{ color: monthSummary.short ? "var(--er)" : "var(--mu)" }}>
+                {inr(monthSummary.short)}
+              </span>
+            </div>
+          )}
+
+          {monthSlips.length === 0 && (
+            <div className="empty">
+              No daily collection saved for this month.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
