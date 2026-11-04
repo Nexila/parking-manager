@@ -361,8 +361,7 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
           onDateChange={(date) => {
             setForm((prev) => ({
               ...prev,
-              from: date + "T" + prev.from.split("T")[1],
-              to: date + "T" + prev.to.split("T")[1],
+              from: `${date}T00:00`,
             }));
           }}
         />
@@ -374,8 +373,7 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
           onDateChange={(date) => {
             setForm((prev) => ({
               ...prev,
-              from: date + "T" + prev.from.split("T")[1],
-              to: date + "T" + prev.to.split("T")[1],
+              to: `${date}T${prev.to.split("T")[1] || "00:00"}`,
             }));
           }}
         />
@@ -586,7 +584,11 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
               <span>{inr(monthSummary.cash)}</span>
               <span>{inr(monthSummary.pt)}</span>
               <b>{inr(monthSummary.total)}</b>
-              <span style={{ color: monthSummary.short ? "var(--er)" : "var(--mu)" }}>
+              <span
+                style={{
+                  color: monthSummary.short ? "var(--er)" : "var(--mu)",
+                }}
+              >
                 {inr(monthSummary.short)}
               </span>
             </div>
