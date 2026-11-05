@@ -25,11 +25,14 @@ function dayFig(x = {}) {
       : 0;
 
   const amt = n * (x.rate || 0);
-  const c = x.cash || 0;
-  const p = x.paytm || 0;
-  const o = x.over || 0;
+  const c = Number(x.cash || 0);
+  const p = Number(x.paytm || 0);
+  const o = Number(x.over || 0);
+  const extra = Number(x.extra || 0);
 
-  const exp = amt + o;
+  // Expected includes Others
+  const exp = amt + o + extra;
+
   const none = !c && !p;
   const col = none ? exp : c + p;
 
@@ -40,12 +43,41 @@ function dayFig(x = {}) {
     exp,
     cash: none ? exp : c,
     pt: p,
-    total: col,
-    short: none ? 0 : Math.max(0, exp - col),
-    diff: none ? 0 : col - exp,
+    extra,
+    total: col + extra,
+    short: none ? 0 : Math.max(0, exp - col - extra),
+    diff: none ? 0 : col + extra - exp,
     entered: !none,
   };
 }
+// function dayFig(x = {}) {
+//   const n =
+//     x.start != null && x.end != null && x.end >= x.start
+//       ? x.end - x.start + 1
+//       : 0;
+
+//   const amt = n * (x.rate || 0);
+//   const c = x.cash || 0;
+//   const p = x.paytm || 0;
+//   const o = x.over || 0;
+
+//   const exp = amt + o;
+//   const none = !c && !p;
+//   const col = none ? exp : c + p;
+
+//   return {
+//     n,
+//     amt,
+//     ot: o,
+//     exp,
+//     cash: none ? exp : c,
+//     pt: p,
+//     total: col,
+//     short: none ? 0 : Math.max(0, exp - col),
+//     diff: none ? 0 : col - exp,
+//     entered: !none,
+//   };
+// }
 
 const MN = [
   "Jan",
@@ -77,16 +109,27 @@ function getDMYears(slips, dm) {
 function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
   const savedSlip = slips.find((x) => x.date === day);
 
+  // const [form, setForm] = useState({
+  //   from: snap(nowDT()),
+  //   to: snap(nowDT()),
+  //   start: "",
+  //   end: "",
+  //   rate: settings.slipRate || 20,
+  //   over: "",
+  //   cash: "",
+  //   paytm: "",
+  // });
   const [form, setForm] = useState({
-    from: snap(nowDT()),
-    to: snap(nowDT()),
-    start: "",
-    end: "",
-    rate: settings.slipRate || 20,
-    over: "",
-    cash: "",
-    paytm: "",
-  });
+  from: snap(nowDT()),
+  to: snap(nowDT()),
+  start: "",
+  end: "",
+  rate: settings.slipRate || 20,
+  over: "",
+  extra: "",
+  cash: "",
+  paytm: "",
+});
   const [dm, setDm] = useState(day.slice(0, 7)); // Year-Month for month summary
 
   // Load saved values when selected day changes
@@ -104,6 +147,7 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
         over: saved.over ?? "",
         cash: saved.cash ?? "",
         paytm: saved.paytm ?? "",
+        extra: saved.extra ?? "",
       });
     } else {
       setForm({
@@ -113,6 +157,7 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
         end: "",
         rate: settings.slipRate || 20,
         over: "",
+         extra: "",
         cash: "",
         paytm: "",
       });
@@ -130,6 +175,7 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
     over: Number(form.over) || 0,
     cash: Number(form.cash) || 0,
     paytm: Number(form.paytm) || 0,
+    extra: Number(form.extra) || 0,
   });
 
   const update = (e) => {
@@ -190,6 +236,7 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
       paytm: Number(form.paytm) || 0,
       over: Number(form.over) || 0,
       short: result.short,
+      extra: Number(form.extra) || 0,
     });
   };
 
@@ -272,6 +319,7 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
       acc.cash += f.cash;
       acc.pt += f.pt;
       acc.short += f.short;
+      acc.extra += f.extra;
       acc.total += f.total;
       acc.excess += Math.max(0, f.diff);
 
@@ -286,6 +334,7 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
       cash: 0,
       pt: 0,
       short: 0,
+      extra: 0,
       total: 0,
       excess: 0,
     },
@@ -410,23 +459,32 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
         </div>
 
         <div className="note-daily-calculation">
-          Slips used: <b>{result.n}</b> × ₹{form.rate} ={" "}
-          <b>{inr(result.amt)}</b>
-          {result.ot > 0 && (
-            <>
-              {" "}
-              + overtime {inr(result.ot)} = <b>{inr(result.exp)}</b>
-            </>
-          )}
-        </div>
+  Slips used: <b>{result.n}</b> × ₹{form.rate} ={" "}
+  <b>{inr(result.amt)}</b>
+  {" + overtime "}
+  <b>{inr(result.ot)}</b>
+  {" + others "}
+  <b>{inr(result.extra)}</b>
+  {" = "}
+  <b>{inr(result.exp)}</b>
+</div>
 
-        {input("over", "Overtime collection (₹)")}
+        <div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "10px",
+  }}
+>
+  {input("over", "Overtime collection (₹)")}
+  {input("extra", "Other amount (₹)")}
+</div>
 
-        <div className="daily-three">
-          {input("cash", "Cash ₹")}
-          {input("paytm", "PayTM ₹")}
-          {input("short", "Short ₹ (auto)", true)}
-        </div>
+<div className="daily-three">
+  {input("cash", "Cash ₹")}
+  {input("paytm", "PayTM ₹")}
+  {input("short", "Short ₹ (auto)", true)}
+</div>
 
         <div className="row daily-save">
           <span className="mu sm">
@@ -467,9 +525,13 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
           <div className="m">+ Overtime</div>
           <b>{inr(result.ot)}</b>
         </div>
+        <div className="item">
+  <div className="m">+ Others</div>
+  <b>{inr(result.extra)}</b>
+</div>
 
         <div className="item">
-          <div className="m">Expected (slip + overtime)</div>
+          <div className="m">Expected (slip + overtime + others)</div>
           <b>{inr(result.exp)}</b>
         </div>
 
@@ -522,7 +584,8 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
         {monthRow("In-slips used", monthSummary.n)}
         {monthRow("Slip amount (slips × cost)", inr(monthSummary.amt))}
         {monthRow("+ Overtime", inr(monthSummary.ot))}
-        {monthRow("Expected (slip + overtime)", inr(monthSummary.exp))}
+        {monthRow("+ Others", inr(monthSummary.extra))}
+        {monthRow("Expected (slip + overtime + others)", inr(monthSummary.exp))}
         {monthRow("Cash", inr(monthSummary.cash))}
         {monthRow("PayTM", inr(monthSummary.pt))}
         {monthRow("Short amount", inr(monthSummary.short), "er")}
@@ -544,12 +607,16 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
 
         <div className="mu sm">Tap a day to open it</div>
 
-        <div style={{ minWidth: "400px" }}>
-          <div className="dw mu">
+        <div style={{ minWidth: "460px" }}>
+          <div
+  className="dw mu"
+  style={{ gridTemplateColumns: "62px 40px repeat(5, minmax(0, 1fr))" }}
+>
             <span>Day</span>
             <span>Slips</span>
             <span>Cash</span>
             <span>PayTM</span>
+            <span>Others</span>
             <span>Total</span>
             <span>Short</span>
           </div>
@@ -559,16 +626,18 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
 
             return (
               <div
-                className={`dw ${x.date === day ? "sel" : ""}`}
-                key={x.id || x.date}
-                onClick={() => setDay(x.date)}
-              >
+  className={`dw ${x.date === day ? "sel" : ""}`}
+  key={x.id || x.date}
+  onClick={() => setDay(x.date)}
+  style={{ gridTemplateColumns: "62px 40px repeat(5, minmax(0, 1fr))" }}
+>
                 <span>
                   {x.date.slice(8)} {weekday(x.date)}
                 </span>
                 <span>{f.n}</span>
                 <span>{inr(f.cash)}</span>
                 <span>{inr(f.pt)}</span>
+                <span>{inr(f.extra)}</span>
                 <b>{inr(f.total)}</b>
                 <span style={{ color: f.short ? "var(--er)" : "var(--mu)" }}>
                   {inr(f.short)}
@@ -578,11 +647,15 @@ function Daily({ slips = [], settings = {}, day, setDay, onSave, onDelete }) {
           })}
 
           {monthSlips.length > 0 && (
-            <div className="dw tot">
+            <div
+  className="dw tot"
+  style={{ gridTemplateColumns: "62px 40px repeat(5, minmax(0, 1fr))" }}
+>
               <span>Total</span>
               <span>{monthSummary.n}</span>
               <span>{inr(monthSummary.cash)}</span>
               <span>{inr(monthSummary.pt)}</span>
+              <span>{inr(monthSummary.extra)}</span>
               <b>{inr(monthSummary.total)}</b>
               <span
                 style={{

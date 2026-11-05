@@ -32,44 +32,95 @@ function Monthly({
   openReminder,
 }) {
   // Daily collection calculation
-  const monthlySlips = (slips || []).filter(
-    (slip) => slip.date?.slice(0, 7) === month,
-  );
+  // Daily collection calculation
+const monthlySlips = (slips || []).filter(
+  (slip) => slip.date?.slice(0, 7) === month,
+);
 
-  const dailySummary = monthlySlips.reduce(
-    (result, slip) => {
-      const count =
-        slip.start != null && slip.end != null && slip.end >= slip.start
-          ? slip.end - slip.start + 1
-          : 0;
+const dailySummary = monthlySlips.reduce(
+  (result, slip) => {
+    const count =
+      slip.start != null && slip.end != null && slip.end >= slip.start
+        ? slip.end - slip.start + 1
+        : 0;
 
-      const amount = count * Number(slip.rate || 0);
-      const overtime = Number(slip.over || 0);
-      const cash = Number(slip.cash || 0);
-      const paytm = Number(slip.paytm || 0);
+    const amount = count * Number(slip.rate || 0);
+    const overtime = Number(slip.over || 0);
+    const extra = Number(slip.extra || 0);
 
-      const expectedAmount = amount + overtime;
-      const noPayment = !cash && !paytm;
-      const total = noPayment ? expectedAmount : cash + paytm;
+    // Expected = Slip amount + Overtime + Others
+    const expectedAmount = amount + overtime + extra;
 
-      result.n += count;
-      result.cash += noPayment ? expectedAmount : cash;
-      result.pt += paytm;
-      result.ot += overtime;
-      result.short += noPayment ? 0 : Math.max(0, expectedAmount - total);
-      result.total += total;
+    const cash = Number(slip.cash || 0);
+    const paytm = Number(slip.paytm || 0);
 
-      return result;
-    },
-    {
-      n: 0,
-      cash: 0,
-      pt: 0,
-      ot: 0,
-      short: 0,
-      total: 0,
-    },
-  );
+    const noPayment = !cash && !paytm;
+
+    // Avoid counting Others twice when no Cash/PayTM is entered
+    const collected = noPayment
+      ? expectedAmount - extra
+      : cash + paytm;
+
+    result.n += count;
+    result.cash += noPayment ? expectedAmount - extra : cash;
+    result.pt += paytm;
+    result.ot += overtime;
+    result.extra += extra;
+    result.short += noPayment
+      ? 0
+      : Math.max(0, expectedAmount - collected - extra);
+    result.total += collected + extra;
+
+    return result;
+  },
+  {
+    n: 0,
+    cash: 0,
+    pt: 0,
+    ot: 0,
+    extra: 0,
+    short: 0,
+    total: 0,
+  },
+);
+  // const monthlySlips = (slips || []).filter(
+  //   (slip) => slip.date?.slice(0, 7) === month,
+  // );
+
+  // const dailySummary = monthlySlips.reduce(
+  //   (result, slip) => {
+  //     const count =
+  //       slip.start != null && slip.end != null && slip.end >= slip.start
+  //         ? slip.end - slip.start + 1
+  //         : 0;
+
+  //     const amount = count * Number(slip.rate || 0);
+  //     const overtime = Number(slip.over || 0);
+  //     const cash = Number(slip.cash || 0);
+  //     const paytm = Number(slip.paytm || 0);
+
+  //     const expectedAmount = amount + overtime;
+  //     const noPayment = !cash && !paytm;
+  //     const total = noPayment ? expectedAmount : cash + paytm;
+
+  //     result.n += count;
+  //     result.cash += noPayment ? expectedAmount : cash;
+  //     result.pt += paytm;
+  //     result.ot += overtime;
+  //     result.short += noPayment ? 0 : Math.max(0, expectedAmount - total);
+  //     result.total += total;
+
+  //     return result;
+  //   },
+  //   {
+  //     n: 0,
+  //     cash: 0,
+  //     pt: 0,
+  //     ot: 0,
+  //     short: 0,
+  //     total: 0,
+  //   },
+  // );
 
   // Monthly expenses
   const monthlyExpenses = (expenses || []).filter(
@@ -309,6 +360,10 @@ function Monthly({
           <b>{inr(dailySummary.ot)}</b>
         </div>
 
+<div className="item">
+  <div className="m">Others</div>
+  <b>{inr(dailySummary.extra)}</b>
+</div>
         <div className="item">
           <div className="m">Short amount</div>
           <b style={{ color: "var(--er)" }}>{inr(dailySummary.short)}</b>
@@ -324,7 +379,7 @@ function Monthly({
             Total income
             <div className="mu sm" style={{ fontWeight: 400 }}>
               Rent {inr(monthlyRentIncome)} + Late fees {inr(monthlyLateIncome)}{" "}
-              + Daily {inr(dailyIncome)}
++ Daily (including Others) {inr(dailyIncome)}
             </div>
           </div>
 

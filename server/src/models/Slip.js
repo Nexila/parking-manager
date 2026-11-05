@@ -48,7 +48,10 @@ const slipSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-
+    extra: {
+      type: Number,
+      default: 0,
+    },
     short: {
       type: Number,
       default: 0,

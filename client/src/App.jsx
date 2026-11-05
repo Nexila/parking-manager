@@ -259,8 +259,11 @@ function App() {
       const cash = Number(s.cash || 0);
       const paytm = Number(s.paytm || 0);
 
-      const totalCollected = !cash && !paytm ? expected : cash + paytm;
+      //const totalCollected = !cash && !paytm ? expected : cash + paytm;
+const extra = Number(s.extra || 0);
 
+const totalCollected =
+  (!cash && !paytm ? expected : cash + paytm) + extra;
       return total + totalCollected;
     }, 0);
 

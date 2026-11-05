@@ -186,3 +186,9 @@
 .ch-d {
   fill: #21a366;
 }
+
+/* Dashboard monthly revenue table - 8 columns */
+.dw {
+  display: grid;
+  grid-template-columns: 55px 40px repeat(6, minmax(0, 1fr));
+}
