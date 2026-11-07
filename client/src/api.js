@@ -94,6 +94,12 @@ export const api = {
 //slips
   getSlips: () => req("/slips"),
 
+  createSlip: (data) =>
+  req("/slips", {
+    method: "POST",
+    body: JSON.stringify(data),
+  }),
+  
 saveSlip: (date, data) =>
   req("/slips/" + date, {
     method: "PUT",
@@ -104,5 +110,115 @@ deleteSlip: (date) =>
   req("/slips/" + date, {
     method: "DELETE",
   }),
+  
 };
+
+
+// const base =
+//   import.meta.env.VITE_API_URL || '/api';
+
+// async function req(path, options = {}) {
+//   const r = await fetch(
+//     base + path,
+//     {
+//       headers: {
+//         "Content-Type":
+//           "application/json",
+//       },
+//       ...options,
+//     },
+//   );
+
+//   if (!r.ok)
+//     throw new Error(
+//       (
+//         await r
+//           .json()
+//           .catch(() => ({}))
+//       ).message ||
+//         "Request failed.",
+//     );
+
+//   return r.status === 204
+//     ? null
+//     : r.json();
+// }
+
+// export const api = {
+//   load: () =>
+//     Promise.all([
+//       req("/tenants"),
+//       req("/payments"),
+//       req("/settings"),
+//     ]),
+
+//   createTenant: (d) =>
+//     req("/tenants", {
+//       method: "POST",
+//       body: JSON.stringify(d),
+//     }),
+
+//   updateTenant: (id, d) =>
+//     req("/tenants/" + id, {
+//       method: "PUT",
+//       body: JSON.stringify(d),
+//     }),
+
+//   createPayment: (d) =>
+//     req("/payments", {
+//       method: "POST",
+//       body: JSON.stringify(d),
+//     }),
+
+//   deletePayment: (id) =>
+//     req("/payments/" + id, {
+//       method: "DELETE",
+//     }),
+
+//   saveSettings: (d) =>
+//     req("/settings", {
+//       method: "PUT",
+//       body: JSON.stringify(d),
+//     }),
+
+//   backup: () =>
+//     req("/backup"),
+
+//   restore: (d) =>
+//     req("/backup/restore", {
+//       method: "POST",
+//       body: JSON.stringify(d),
+//     }),
+
+// /////////////////////////////////////expenses
+//       // Expenses
+//   getExpenses: () =>
+//     req("/expenses"),
+
+//   createExpense: (data) =>
+//     req("/expenses", {
+//       method: "POST",
+//       body: JSON.stringify(data),
+//     }),
+
+//   deleteExpense: (id) =>
+//     req("/expenses/" + id, {
+//       method: "DELETE",
+//     }),
+
+
+// //slips
+//   getSlips: () => req("/slips"),
+
+// saveSlip: (date, data) =>
+//   req("/slips/" + date, {
+//     method: "PUT",
+//     body: JSON.stringify(data),
+//   }),
+
+// deleteSlip: (date) =>
+//   req("/slips/" + date, {
+//     method: "DELETE",
+//   }),
+// };
 
