@@ -33,56 +33,55 @@ function Monthly({
 }) {
   // Daily collection calculation
   // Daily collection calculation
-const monthlySlips = (slips || []).filter(
-  (slip) => slip.date?.slice(0, 7) === month,
-);
+  const monthlySlips = (slips || []).filter(
+    (slip) => slip.date?.slice(0, 7) === month,
+  );
 
-const dailySummary = monthlySlips.reduce(
-  (result, slip) => {
-    const count =
-      slip.start != null && slip.end != null && slip.end >= slip.start
-        ? slip.end - slip.start + 1
-        : 0;
+  const dailySummary = monthlySlips.reduce(
+    (result, slip) => {
+      const count =
+        slip.start != null && slip.end != null && slip.end >= slip.start
+          ? slip.end - slip.start + 1
+          : 0;
 
-    const amount = count * Number(slip.rate || 0);
-    const overtime = Number(slip.over || 0);
-    const extra = Number(slip.extra || 0);
+      const amount = count * Number(slip.rate || 0);
+      const overtime = Number(slip.over || 0);
+      const extra = Number(slip.extra || 0);
 
-    // Expected = Slip amount + Overtime + Others
-    const expectedAmount = amount + overtime + extra;
+      // Expected = Slip amount + Overtime + Others
+      const expectedAmount = amount + overtime + extra;
 
-    const cash = Number(slip.cash || 0);
-    const paytm = Number(slip.paytm || 0);
+      const cash = Number(slip.cash || 0);
+      const paytm = Number(slip.paytm || 0);
 
-    const noPayment = !cash && !paytm;
+      const noPayment = !cash && !paytm;
 
-    // Avoid counting Others twice when no Cash/PayTM is entered
-    const collected = noPayment
-      ? expectedAmount - extra
-      : cash + paytm;
+      // Avoid counting Others twice when no Cash/PayTM is entered
+      const collected = noPayment ? expectedAmount - extra : cash + paytm;
 
-    result.n += count;
-    result.cash += noPayment ? expectedAmount - extra : cash;
-    result.pt += paytm;
-    result.ot += overtime;
-    result.extra += extra;
-    result.short += noPayment
-      ? 0
-      : Math.max(0, expectedAmount - collected - extra);
-    result.total += collected + extra;
+      result.n += count;
+      result.cash += noPayment ? expectedAmount - extra : cash;
+      result.pt += paytm;
+      result.ot += overtime;
+      result.extra += extra;
+      result.short += noPayment
+        ? 0
+        : Math.max(0, expectedAmount - collected - extra);
+      result.total += collected;
+      // result.total += collected + extra;
 
-    return result;
-  },
-  {
-    n: 0,
-    cash: 0,
-    pt: 0,
-    ot: 0,
-    extra: 0,
-    short: 0,
-    total: 0,
-  },
-);
+      return result;
+    },
+    {
+      n: 0,
+      cash: 0,
+      pt: 0,
+      ot: 0,
+      extra: 0,
+      short: 0,
+      total: 0,
+    },
+  );
   // const monthlySlips = (slips || []).filter(
   //   (slip) => slip.date?.slice(0, 7) === month,
   // );
@@ -360,10 +359,10 @@ const dailySummary = monthlySlips.reduce(
           <b>{inr(dailySummary.ot)}</b>
         </div>
 
-<div className="item">
-  <div className="m">Others</div>
-  <b>{inr(dailySummary.extra)}</b>
-</div>
+        <div className="item">
+          <div className="m">Others</div>
+          <b>{inr(dailySummary.extra)}</b>
+        </div>
         <div className="item">
           <div className="m">Short amount</div>
           <b style={{ color: "var(--er)" }}>{inr(dailySummary.short)}</b>
@@ -379,7 +378,7 @@ const dailySummary = monthlySlips.reduce(
             Total income
             <div className="mu sm" style={{ fontWeight: 400 }}>
               Rent {inr(monthlyRentIncome)} + Late fees {inr(monthlyLateIncome)}{" "}
-+ Daily (including Others) {inr(dailyIncome)}
+              + Daily (including Others) {inr(dailyIncome)}
             </div>
           </div>
 
